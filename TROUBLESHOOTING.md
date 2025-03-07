@@ -2,28 +2,27 @@
 
 ## Common Issues
 
-### "Failed to fetch" Error on ARM64 Deployments
+### "Failed to fetch" Error
 
 **Symptoms:**
-- The application works fine on x86/AMD64 systems
-- When clicking "Summarize" on ARM64 systems, you see "Error: Failed to fetch"
+- When clicking "Summarize", you see "Error: Failed to fetch"
 - No detailed error message is shown in the UI
 
 **Root Cause:**
-The original frontend code attempted to directly access the backend container by hostname (`http://backend:8000`), which works differently across architectures due to how Docker networking and browser security policies interact in different environments.
+This can occur due to networking issues between the frontend and backend containers, or if the backend service is not responding correctly.
 
-**Solution Implemented:**
-1. Modified frontend code to use a relative URL path (`/api/summarize`) instead of hardcoded container hostnames
-2. Added Nginx reverse proxy configuration to correctly route API requests to the appropriate backend service
-3. Added debugging information in the response headers and console logs
-
-**How to Apply the Fix:**
-1. Make sure you have the latest code with the fixes
-2. Run the provided script to rebuild and restart your containers:
+**Solution:**
+1. Make sure both services are running correctly
+2. Verify the environment variables are properly set
+3. Use the provided rebuild script to ensure a clean setup:
    ```bash
-   ./rebuild-and-run.sh prod-arm64
+   ./rebuild-and-run.sh
    ```
-   (Replace `prod-arm64` with your desired profile: `dev-x86`, `dev-arm64`, `prod-x86`, or `prod-arm64`)
+   
+   For development mode (building images locally):
+   ```bash
+   ./rebuild-and-run.sh dev
+   ```
 
 **Verifying the Fix:**
 1. Open `http://localhost:8081` in your browser
@@ -42,13 +41,10 @@ To check if your containers can communicate with each other:
 docker ps
 
 # Enter the frontend container
-docker exec -it FRONTEND_CONTAINER_ID /bin/sh
+docker exec -it frontend /bin/sh
 
 # Try to reach the backend from inside the container
-wget -O- http://backend-dev-x86:8000/health  # For dev-x86 profile
-wget -O- http://backend-dev-arm64:8000/health  # For dev-arm64 profile
-wget -O- http://backend-x86:8000/health  # For x86 profile
-wget -O- http://backend-arm64:8000/health  # For arm64 profile
+wget -O- http://backend:8000/health
 ```
 
 ### Checking Nginx Configuration

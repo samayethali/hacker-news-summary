@@ -38,58 +38,56 @@ A web application that summarizes Hacker News discussions using the Anthropic AP
 
 ### Docker Deployment
 
-> **Note**: If you're upgrading from a previous version, run the `./rebuild-and-run.sh` script to apply the latest fixes for cross-architecture compatibility.
+The application now supports automatic multi-architecture detection, which makes it much simpler to deploy on any system without manually selecting architecture-specific profiles.
 
-The application provides three distinct deployment profiles to suit different environments:
+#### 1. Quick Start (Production Mode)
 
-#### 1. Development Mode
+For most users, simply run:
 
-Use these profiles when developing or extending the application. They build the images locally from source:
-
-**For x86_64/AMD64 Systems (Intel/AMD):**
 ```bash
-docker compose --profile dev-x86 up -d
+docker compose up -d
 ```
+
+This will automatically pull the pre-built multi-architecture images that match your system architecture (x86_64/AMD64 or ARM64).
 
 To stop the services:
 ```bash
-docker compose --profile dev-x86 down
+docker compose down
 ```
 
-**For ARM64 Systems (e.g., Apple Silicon, Raspberry Pi 4):**
+#### 2. Development Mode
+
+If you're developing or extending the application and want to build the images locally:
+
 ```bash
-docker compose --profile dev-arm64 up -d
+# Using the helper script:
+./compose-up.sh dev
+
+# Or manually with environment variable:
+BUILD_LOCALLY=true docker compose up -d --build
 ```
 
-To stop the services:
+#### 3. Using the Helper Script
+
+A convenience script is provided to easily switch between modes:
+
 ```bash
-docker compose --profile dev-arm64 down
+# Production mode (using pre-built images)
+./compose-up.sh
+
+# Development mode (building locally)
+./compose-up.sh dev
 ```
 
-#### 2. Production Mode - x86_64/AMD64 Systems
+#### 4. Customizing Images
 
-For deployment on Intel/AMD based systems:
+You can customize the image repository and tag in your `.env` file:
 
-```bash
-docker compose --profile prod-x86 up -d
 ```
-
-To stop the services:
-```bash
-docker compose --profile prod-x86 down
-```
-
-#### 3. Production Mode - ARM64 Systems
-
-For deployment on ARM-based systems (e.g., Apple Silicon, Raspberry Pi 4):
-
-```bash
-docker compose --profile prod-arm64 up -d
-```
-
-To stop the services:
-```bash
-docker compose --profile prod-arm64 down
+# In your .env file:
+BUILD_LOCALLY=false
+IMAGE_REPO=your-registry/hacker-news-summary
+IMAGE_TAG=v1.0.0
 ```
 
 After starting any of these profiles, access the application by navigating to:

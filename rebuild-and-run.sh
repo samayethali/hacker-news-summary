@@ -1,44 +1,33 @@
 #!/bin/bash
 set -e
 
-# Detect architecture
+# Detect architecture (informational only - the compose setup now handles this automatically)
 ARCH=$(uname -m)
-if [ "$ARCH" = "x86_64" ]; then
-  DEFAULT_PROFILE="dev-x86"
-elif [ "$ARCH" = "arm64" ] || [ "$ARCH" = "aarch64" ]; then
-  DEFAULT_PROFILE="dev-arm64"
+echo "Detected architecture: $ARCH"
+echo "Note: This application now uses multi-architecture images that work on any system"
+
+# Determine mode (development or production)
+if [ "$1" == "production" ] || [ "$1" == "prod" ]; then
+  MODE=""
+  echo "Using production mode (pre-built images)"
 else
-  echo "Unsupported architecture: $ARCH"
-  echo "Please specify a profile manually: dev-x86, dev-arm64, prod-x86, or prod-arm64"
-  exit 1
-fi
-
-# Variables
-PROFILE=${1:-$DEFAULT_PROFILE}  # Default to architecture-specific dev profile if none specified
-echo "Using profile: $PROFILE"
-
-# Validate profile
-if [[ ! "$PROFILE" =~ ^(dev-x86|dev-arm64|prod-x86|prod-arm64)$ ]]; then
-  echo "Warning: '$PROFILE' is not a recognized profile name."
-  echo "Available profiles: dev-x86, dev-arm64, prod-x86, prod-arm64"
-  read -p "Continue with profile '$PROFILE'? (y/n): " CONFIRM
-  if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
-    echo "Aborted."
-    exit 1
-  fi
+  MODE="dev"
+  echo "Using development mode (building locally)"
 fi
 
 # Stop any existing containers
 echo "Stopping existing containers..."
-docker compose --profile "$PROFILE" down
+docker compose down
 
-# Rebuild images from source (needed to incorporate our changes)
-echo "Rebuilding images..."
-docker compose --profile "$PROFILE" build
+# Clean up any old containers/images to ensure a fresh start
+echo "Pruning unused containers..."
+docker container prune -f
+echo "Pruning unused images..."
+docker image prune -f
 
-# Start the services
-echo "Starting services..."
-docker compose --profile "$PROFILE" up -d
+# Use the compose-up.sh helper script to rebuild and start services
+echo "Rebuilding and starting services..."
+./compose-up.sh $MODE
 
 # Check if services are running
 echo "Waiting for services to start..."
