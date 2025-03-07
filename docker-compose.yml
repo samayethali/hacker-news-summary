@@ -1,4 +1,5 @@
 services:
+  # Development services
   backend-dev:
     profiles:
       - dev
@@ -17,16 +18,18 @@ services:
     build:
       context: ./frontend
     ports:
-      - "8080:80"
+      - "8081:80"
     depends_on:
-      - backend
+      - backend-dev
     networks:
       - hn-network
 
-  backend-prod:
+  # Production services for x86_64/AMD64
+  backend-x86:
     profiles:
-      - prod
+      - prod-x86
     image: ghcr.io/samayethali/hacker-news-summary-backend:latest
+    platform: linux/amd64
     ports:
       - "8000:8000"
     env_file:
@@ -35,14 +38,42 @@ services:
     networks:
       - hn-network
 
-  frontend-prod:
+  frontend-x86:
     profiles:
-      - prod
+      - prod-x86
     image: ghcr.io/samayethali/hacker-news-summary-frontend:latest
+    platform: linux/amd64
     ports:
-      - "8080:80"
+      - "8081:80"
     depends_on:
-      - backend-prod
+      - backend-x86
+    restart: unless-stopped
+    networks:
+      - hn-network
+
+  # Production services for ARM64
+  backend-arm64:
+    profiles:
+      - prod-arm64
+    image: ghcr.io/samayethali/hacker-news-summary-backend:latest
+    platform: linux/arm64
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    restart: unless-stopped
+    networks:
+      - hn-network
+
+  frontend-arm64:
+    profiles:
+      - prod-arm64
+    image: ghcr.io/samayethali/hacker-news-summary-frontend:latest
+    platform: linux/arm64
+    ports:
+      - "8081:80"
+    depends_on:
+      - backend-arm64
     restart: unless-stopped
     networks:
       - hn-network

@@ -37,18 +37,46 @@ A web application that summarizes Hacker News discussions using the Anthropic AP
 
 ### Docker Deployment
 
-1. Build and start the services:
-   ```
-   docker compose --profile prod up -d
-   ```
+The application now provides three distinct deployment profiles to suit different environments:
 
-2. Access the application:
-   - Open your browser and navigate to `http://localhost:8080`
+#### 1. Development Mode
 
-3. To stop the services:
-   ```
-   docker compose --profile prod down
-   ```
+Use this profile when developing or extending the application. It builds the images locally from source:
+
+```bash
+docker compose --profile dev up -d
+```
+
+#### 2. Production Mode - x86_64/AMD64 Systems
+
+For deployment on Intel/AMD based systems:
+
+```bash
+docker compose --profile prod-x86 up -d
+```
+
+To stop the services:
+```bash
+docker compose --profile prod-x86 down
+```
+
+#### 3. Production Mode - ARM64 Systems
+
+For deployment on ARM-based systems (e.g., Apple Silicon, Raspberry Pi 4):
+
+```bash
+docker compose --profile prod-arm64 up -d
+```
+
+To stop the services:
+```bash
+docker compose --profile prod-arm64 down
+```
+
+After starting any of these profiles, access the application by navigating to:
+```
+http://localhost:8081
+```
 
 ## API Endpoints
 
