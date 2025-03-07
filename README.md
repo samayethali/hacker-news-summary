@@ -2,6 +2,8 @@
 
 A web application that summarizes Hacker News discussions using the Anthropic API.
 
+![HN Discussion Summarizer Screenshot](img/screenshot.png)
+
 ## Features
 
 - Simple, clean interface for entering Hacker News URLs
