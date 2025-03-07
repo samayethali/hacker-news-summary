@@ -1,5 +1,6 @@
 services:
   backend:
+    image: ghcr.io/${GITHUB_REPOSITORY:-samayethali/hacker-news-summary}-backend:latest
     build:
       context: ./backend
     ports:
@@ -11,6 +12,7 @@ services:
       - hn-network
 
   frontend:
+    image: ghcr.io/${GITHUB_REPOSITORY:-samayethali/hacker-news-summary}-frontend:latest
     build:
       context: ./frontend
     ports:
