@@ -30,6 +30,7 @@ A web application that summarizes Hacker News discussions using the Anthropic AP
    ```
 
 2. Configure your environment variables:
+   - Rename `.env.example` to `.env`
    - Edit the `.env` file in the root directory
    - Set your Anthropic API key: `ANTHROPIC_API_KEY=your_api_key_here`
    - Optionally set the model: `ANTHROPIC_MODEL=claude-3-7-sonnet-20250219` (defaults to `claude-3-5-haiku-20241022` if not specified)
