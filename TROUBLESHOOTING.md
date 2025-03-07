@@ -23,7 +23,7 @@ The original frontend code attempted to directly access the backend container by
    ```bash
    ./rebuild-and-run.sh prod-arm64
    ```
-   (Replace `prod-arm64` with your desired profile: `dev`, `prod-x86`, or `prod-arm64`)
+   (Replace `prod-arm64` with your desired profile: `dev-x86`, `dev-arm64`, `prod-x86`, or `prod-arm64`)
 
 **Verifying the Fix:**
 1. Open `http://localhost:8081` in your browser
@@ -45,7 +45,8 @@ docker ps
 docker exec -it FRONTEND_CONTAINER_ID /bin/sh
 
 # Try to reach the backend from inside the container
-wget -O- http://backend-dev:8000/health  # For dev profile
+wget -O- http://backend-dev-x86:8000/health  # For dev-x86 profile
+wget -O- http://backend-dev-arm64:8000/health  # For dev-arm64 profile
 wget -O- http://backend-x86:8000/health  # For x86 profile
 wget -O- http://backend-arm64:8000/health  # For arm64 profile
 ```

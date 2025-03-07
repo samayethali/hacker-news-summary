@@ -44,10 +44,26 @@ The application provides three distinct deployment profiles to suit different en
 
 #### 1. Development Mode
 
-Use this profile when developing or extending the application. It builds the images locally from source:
+Use these profiles when developing or extending the application. They build the images locally from source:
 
+**For x86_64/AMD64 Systems (Intel/AMD):**
 ```bash
-docker compose --profile dev up -d
+docker compose --profile dev-x86 up -d
+```
+
+To stop the services:
+```bash
+docker compose --profile dev-x86 down
+```
+
+**For ARM64 Systems (e.g., Apple Silicon, Raspberry Pi 4):**
+```bash
+docker compose --profile dev-arm64 up -d
+```
+
+To stop the services:
+```bash
+docker compose --profile dev-arm64 down
 ```
 
 #### 2. Production Mode - x86_64/AMD64 Systems
