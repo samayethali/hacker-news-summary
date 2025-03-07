@@ -1,11 +1,16 @@
 FROM nginx:alpine
 
-# Copy static files directly
-COPY index.html script.js styles.css /usr/share/nginx/html/
+# Add metadata labels
+LABEL maintainer="HN Summary Team"
+LABEL description="HN Summary Frontend Service"
+LABEL version="1.0"
 
-# Add healthcheck
+# Copy static files directly
+COPY index.html script.js styles.css health.html /usr/share/nginx/html/
+
+# Add healthcheck using dedicated health endpoint - using 127.0.0.1 instead of localhost
 HEALTHCHECK --interval=30s --timeout=3s \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:80/ || exit 1
+    CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:80/health.html || exit 1
 
 # Create directories and adjust permissions for Nginx to work with non-root user
 RUN adduser -D -u 1000 appuser && \
@@ -19,8 +24,13 @@ RUN adduser -D -u 1000 appuser && \
     chmod -R 777 /var/cache/nginx/ && \
     touch /var/run/nginx.pid && \
     chmod 777 /var/run/nginx.pid && \
-    # Remove default nginx user directive since we're using a non-root user
-    sed -i '/user nginx;/d' /etc/nginx/nginx.conf
+    # Explicitly set Nginx to run as appuser instead of removing the line
+    sed -i 's/user  nginx;/user  appuser;/' /etc/nginx/nginx.conf && \
+    # Ensure log directory is writable
+    mkdir -p /var/log/nginx && \
+    chmod -R 777 /var/log/nginx && \
+    # Make nginx config directories writable for startup scripts
+    chmod -R 777 /etc/nginx/conf.d
 
 USER appuser
 

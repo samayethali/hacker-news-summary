@@ -15,6 +15,11 @@ load_dotenv()
 
 app = FastAPI(title="HN Summary API")
 
+@app.get("/health")
+async def health_check():
+    """Health check endpoint for container monitoring."""
+    return {"status": "healthy"}
+
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
