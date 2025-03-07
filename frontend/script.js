@@ -46,11 +46,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Fetch summary from the backend API
     async function fetchSummary(url) {
-        // Use relative path when in production (Docker), fallback to localhost for development
+        // Use relative URL path in production, fallback to explicit localhost for development
+        // This avoids container hostname resolution issues on different architectures
         const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
             ? 'http://localhost:8000/summarize'
-            : 'http://backend:8000/summarize';
+            : '/api/summarize';
             
+        console.log('Using API URL:', apiUrl);
+        
         const response = await fetch(apiUrl, {
             method: 'POST',
             headers: {

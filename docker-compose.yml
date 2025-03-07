@@ -3,6 +3,7 @@ services:
   backend-dev:
     profiles:
       - dev
+    container_name: backend
     build:
       context: ./backend
     ports:
@@ -15,6 +16,7 @@ services:
   frontend-dev:
     profiles:
       - dev
+    container_name: frontend
     build:
       context: ./frontend
     ports:
@@ -28,6 +30,7 @@ services:
   backend-x86:
     profiles:
       - prod-x86
+    container_name: backend
     image: ghcr.io/samayethali/hacker-news-summary-backend:latest
     platform: linux/amd64
     ports:
@@ -41,6 +44,7 @@ services:
   frontend-x86:
     profiles:
       - prod-x86
+    container_name: frontend
     image: ghcr.io/samayethali/hacker-news-summary-frontend:latest
     platform: linux/amd64
     ports:
@@ -55,6 +59,7 @@ services:
   backend-arm64:
     profiles:
       - prod-arm64
+    container_name: backend
     image: ghcr.io/samayethali/hacker-news-summary-backend:latest
     platform: linux/arm64
     ports:
@@ -68,6 +73,7 @@ services:
   frontend-arm64:
     profiles:
       - prod-arm64
+    container_name: frontend
     image: ghcr.io/samayethali/hacker-news-summary-frontend:latest
     platform: linux/arm64
     ports:

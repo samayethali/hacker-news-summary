@@ -13,6 +13,7 @@ A web application that summarizes Hacker News discussions using the Anthropic AP
 - Renders results in formatted markdown
 - Dockerized deployment for easy setup
 - Allows for downloading the result as Markdown
+- Cross-architecture compatibility (works on x86 and ARM64)
 
 ## Setup
 
@@ -37,7 +38,9 @@ A web application that summarizes Hacker News discussions using the Anthropic AP
 
 ### Docker Deployment
 
-The application now provides three distinct deployment profiles to suit different environments:
+> **Note**: If you're upgrading from a previous version, run the `./rebuild-and-run.sh` script to apply the latest fixes for cross-architecture compatibility.
+
+The application provides three distinct deployment profiles to suit different environments:
 
 #### 1. Development Mode
 

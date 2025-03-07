@@ -8,6 +8,9 @@ LABEL version="1.0"
 # Copy static files directly
 COPY index.html script.js styles.css health.html /usr/share/nginx/html/
 
+# Copy nginx configuration
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
 # Add healthcheck using dedicated health endpoint - using 127.0.0.1 instead of localhost
 HEALTHCHECK --interval=30s --timeout=3s \
     CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:80/health.html || exit 1
