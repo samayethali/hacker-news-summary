@@ -1,5 +1,7 @@
 services:
-  backend:
+  backend-dev:
+    profiles:
+      - dev
     build:
       context: ./backend
     ports:
@@ -9,7 +11,9 @@ services:
     networks:
       - hn-network
 
-  frontend:
+  frontend-dev:
+    profiles:
+      - dev
     build:
       context: ./frontend
     ports:

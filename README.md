@@ -39,7 +39,7 @@ A web application that summarizes Hacker News discussions using the Anthropic AP
 
 1. Build and start the services:
    ```
-   docker compose up -d --build
+   docker compose --profile prod up -d
    ```
 
 2. Access the application:
@@ -47,7 +47,7 @@ A web application that summarizes Hacker News discussions using the Anthropic AP
 
 3. To stop the services:
    ```
-   docker compose down
+   docker compose --profile prod down
    ```
 
 ## API Endpoints
