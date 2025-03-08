@@ -1,116 +1,30 @@
 services:
-  # Development services for x86_64/AMD64
-  backend-dev-x86:
-    profiles:
-      - dev-x86
+  backend:
     container_name: backend
+    image: ${IMAGE_REPO:-ghcr.io/samayethali/hacker-news-summary-backend}:${IMAGE_TAG:-latest}
+    # Development override - will use this instead of image if BUILD_LOCALLY=true
     build:
       context: ./backend
-    platform: linux/amd64
+      dockerfile: Dockerfile
     ports:
       - "8000:8000"
     env_file:
       - .env
+    restart: unless-stopped
     networks:
       - hn-network
 
-  frontend-dev-x86:
-    profiles:
-      - dev-x86
+  frontend:
     container_name: frontend
+    image: ${IMAGE_REPO:-ghcr.io/samayethali/hacker-news-summary-frontend}:${IMAGE_TAG:-latest}
+    # Development override - will use this instead of image if BUILD_LOCALLY=true
     build:
       context: ./frontend
-    platform: linux/amd64
+      dockerfile: Dockerfile
     ports:
       - "8081:80"
     depends_on:
-      - backend-dev-x86
-    networks:
-      - hn-network
-      
-  # Development services for ARM64
-  backend-dev-arm64:
-    profiles:
-      - dev-arm64
-    container_name: backend
-    build:
-      context: ./backend
-    platform: linux/arm64
-    ports:
-      - "8000:8000"
-    env_file:
-      - .env
-    networks:
-      - hn-network
-
-  frontend-dev-arm64:
-    profiles:
-      - dev-arm64
-    container_name: frontend
-    build:
-      context: ./frontend
-    platform: linux/arm64
-    ports:
-      - "8081:80"
-    depends_on:
-      - backend-dev-arm64
-    networks:
-      - hn-network
-
-  # Production services for x86_64/AMD64
-  backend-x86:
-    profiles:
-      - prod-x86
-    container_name: backend
-    image: ghcr.io/samayethali/hacker-news-summary-backend:latest
-    platform: linux/amd64
-    ports:
-      - "8000:8000"
-    env_file:
-      - .env
-    restart: unless-stopped
-    networks:
-      - hn-network
-
-  frontend-x86:
-    profiles:
-      - prod-x86
-    container_name: frontend
-    image: ghcr.io/samayethali/hacker-news-summary-frontend:latest
-    platform: linux/amd64
-    ports:
-      - "8081:80"
-    depends_on:
-      - backend-x86
-    restart: unless-stopped
-    networks:
-      - hn-network
-
-  # Production services for ARM64
-  backend-arm64:
-    profiles:
-      - prod-arm64
-    container_name: backend
-    image: ghcr.io/samayethali/hacker-news-summary-backend:latest
-    platform: linux/arm64
-    ports:
-      - "8000:8000"
-    env_file:
-      - .env
-    restart: unless-stopped
-    networks:
-      - hn-network
-
-  frontend-arm64:
-    profiles:
-      - prod-arm64
-    container_name: frontend
-    image: ghcr.io/samayethali/hacker-news-summary-frontend:latest
-    platform: linux/arm64
-    ports:
-      - "8081:80"
-    depends_on:
-      - backend-arm64
+      - backend
     restart: unless-stopped
     networks:
       - hn-network
