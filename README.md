@@ -8,11 +8,10 @@ A web application that summarizes Hacker News discussions using the Anthropic AP
 
 - Simple, clean interface for entering Hacker News URLs
 - Accepts full HN URLs or just item IDs
-- Fetches and parses HN discussion threads
 - Summarizes discussions with thematic organization
 - Renders results in formatted markdown
+- Allows for downloading the summary as Markdown
 - Dockerized deployment for easy setup
-- Allows for downloading the result as Markdown
 - Cross-architecture compatibility (works on x86 and ARM64)
 
 ## Setup
@@ -31,14 +30,9 @@ A web application that summarizes Hacker News discussions using the Anthropic AP
    ```
 
 2. Configure your environment variables:
-   - Rename `.env.example` to `.env`
-   - Edit the `.env` file in the root directory
-   - Set your Anthropic API key: `ANTHROPIC_API_KEY=your_api_key_here`
-   - Optionally set the model: `ANTHROPIC_MODEL=claude-3-7-sonnet-20250219` (defaults to `claude-3-5-haiku-20241022` if not specified)
+   - Rename `.env.example` to `.env` and set your Anthropic API key: `ANTHROPIC_API_KEY=your_api_key_here`
 
 ### Docker Deployment
-
-The application now supports automatic multi-architecture detection, which makes it much simpler to deploy on any system without manually selecting architecture-specific profiles.
 
 #### 1. Quick Start (Production Mode)
 
@@ -67,30 +61,7 @@ If you're developing or extending the application and want to build the images l
 BUILD_LOCALLY=true docker compose up -d --build
 ```
 
-#### 3. Using the Helper Script
-
-A convenience script is provided to easily switch between modes:
-
-```bash
-# Production mode (using pre-built images)
-./run.sh
-
-# Development mode (building locally)
-./run.sh dev
-```
-
-#### 4. Customizing Images
-
-You can customize the image repository and tag in your `.env` file:
-
-```
-# In your .env file:
-BUILD_LOCALLY=false
-IMAGE_REPO=your-registry/hacker-news-summary
-IMAGE_TAG=v1.0.0
-```
-
-After starting any of these profiles, access the application by navigating to:
+Access the application by navigating to:
 ```
 http://localhost:8081
 ```
@@ -103,16 +74,25 @@ http://localhost:8081
 
 ```
 hacker-news-summary/
-├── .env                   # Environment variables
+├── .env.example           # Example environment variables file
+├── .gitignore             # Git ignore file
 ├── docker-compose.yml     # Docker Compose configuration
+├── LICENSE                # License file
+├── rebuild-and-run.sh     # Helper script to rebuild and run the application
+├── run.sh                 # Helper script to run the application
 ├── backend/
+│   ├── .dockerignore      # Docker ignore file for backend
+│   ├── Dockerfile         # Backend Docker configuration
+│   ├── entrypoint.sh      # Docker entrypoint script
 │   ├── main.py            # FastAPI application
-│   ├── requirements.txt   # Dependencies
-│   └── Dockerfile         # Backend Docker configuration
+│   └── requirements.txt   # Dependencies
 ├── frontend/
+│   ├── .dockerignore      # Docker ignore file for frontend
+│   ├── Dockerfile         # Frontend Docker configuration
+│   ├── health.html        # Health check page
 │   ├── index.html         # HTML interface
-│   ├── styles.css         # Styling
+│   ├── nginx.conf         # Nginx configuration
 │   ├── script.js          # Frontend logic
-│   └── Dockerfile         # Frontend Docker configuration
-└── README.md              # This file
+│   └── styles.css         # Styling
+├── README.md              # This file
 ```
