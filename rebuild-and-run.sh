@@ -25,9 +25,9 @@ docker container prune -f
 echo "Pruning unused images..."
 docker image prune -f
 
-# Use the compose-up.sh helper script to rebuild and start services
+# Use the run.sh helper script to rebuild and start services
 echo "Rebuilding and starting services..."
-./compose-up.sh $MODE
+./run.sh $MODE
 
 # Check if services are running
 echo "Waiting for services to start..."

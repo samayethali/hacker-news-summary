@@ -61,7 +61,7 @@ If you're developing or extending the application and want to build the images l
 
 ```bash
 # Using the helper script:
-./compose-up.sh dev
+./run.sh dev
 
 # Or manually with environment variable:
 BUILD_LOCALLY=true docker compose up -d --build
@@ -73,10 +73,10 @@ A convenience script is provided to easily switch between modes:
 
 ```bash
 # Production mode (using pre-built images)
-./compose-up.sh
+./run.sh
 
 # Development mode (building locally)
-./compose-up.sh dev
+./run.sh dev
 ```
 
 #### 4. Customizing Images

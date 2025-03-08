@@ -2,8 +2,8 @@
 
 # Helper script to run docker compose with the appropriate configuration
 # Usage: 
-#   ./compose-up.sh        - Runs in production mode (using pre-built images)
-#   ./compose-up.sh dev    - Runs in development mode (building locally)
+#   ./run.sh        - Runs in production mode (using pre-built images)
+#   ./run.sh dev    - Runs in development mode (building locally)
 
 # Determine if this is development or production mode
 if [ "$1" == "dev" ]; then
