@@ -21,7 +21,9 @@ A web application that summarizes Hacker News discussions using the Anthropic AP
 - Docker and Docker Compose
 - Anthropic API key
 
-### Configuration
+### Docker Deployment
+
+#### Quick Start (Production Mode)
 
 1. Clone this repository:
    ```
@@ -29,14 +31,10 @@ A web application that summarizes Hacker News discussions using the Anthropic AP
    cd hacker-news-summary
    ```
 
-2. Configure your environment variables:
-   - Rename `.env.example` to `.env` and set your Anthropic API key: `ANTHROPIC_API_KEY=your_api_key_here`
+2. Configure your environment variables (required):
+   - Rename `.env.example` to `.env` and set your Anthropic API key
 
-### Docker Deployment
-
-#### 1. Quick Start (Production Mode)
-
-For most users, simply run:
+3. For most users, simply run:
 
 ```bash
 docker compose up -d
@@ -44,12 +42,17 @@ docker compose up -d
 
 This will automatically pull the pre-built multi-architecture images that match your system architecture (x86_64/AMD64 or ARM64).
 
+Access the application by navigating to:
+```
+http://localhost:8081
+```
+
 To stop the services:
 ```bash
 docker compose down
 ```
 
-#### 2. Development Mode
+#### Development Mode
 
 If you're developing or extending the application and want to build the images locally:
 
@@ -59,11 +62,6 @@ If you're developing or extending the application and want to build the images l
 
 # Or manually with environment variable:
 BUILD_LOCALLY=true docker compose up -d --build
-```
-
-Access the application by navigating to:
-```
-http://localhost:8081
 ```
 
 ## API Endpoints
