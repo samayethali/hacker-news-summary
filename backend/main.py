@@ -8,7 +8,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, HttpUrl
-import anthropic
+from openai import OpenAI
 
 # Load .env file
 load_dotenv()
@@ -30,18 +30,22 @@ app.add_middleware(
 )
 
 # Get environment variables
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
-if not ANTHROPIC_API_KEY:
-    raise ValueError("ANTHROPIC_API_KEY environment variable is not set")
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+if not OPENROUTER_API_KEY:
+    raise ValueError("OPENROUTER_API_KEY environment variable is not set")
 
 # Get model from environment, default to claude-3.7-sonnet if not specified
-ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-3.7-sonnet")
+OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "anthropic/claude-3.7-sonnet")
 
-# Initialize Anthropic client
-client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+# Initialize OpenAI client with OpenRouter base URL
+client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=OPENROUTER_API_KEY
+)
 
 class HNRequest(BaseModel):
     url: str
+    model: Optional[str] = None
 
 class SummaryResponse(BaseModel):
     summary: str
@@ -105,10 +109,13 @@ def extract_comments(item: Dict[Any, Any]) -> List[str]:
     
     return comments
 
-async def generate_summary(comments: List[str]) -> str:
-    """Generate a summary using the Anthropic Claude-3.7-Sonnet model."""
+async def generate_summary(comments: List[str], model: str = None) -> str:
+    """Generate a summary using OpenRouter."""
     if not comments:
         return "No comments found to summarize."
+    
+    # Use provided model or default
+    model_to_use = model or OPENROUTER_MODEL
     
     # Join all comments into a single text
     all_comments = "\n\n".join(comments)
@@ -133,16 +140,22 @@ Remember to:
 """
     
     try:
-        response = client.messages.create(
-            model=ANTHROPIC_MODEL,
-            max_tokens=4000,
+        # Replace Anthropic API call with OpenRouter (via OpenAI SDK)
+        response = client.chat.completions.create(
+            model=model_to_use,
             messages=[
                 {"role": "user", "content": f"{all_comments}\n\n{prompt}"}
-            ]
+            ],
+            max_tokens=4000,
+            extra_headers={
+                "HTTP-Referer": "https://hn-summary-app.example.com",  # Replace with your actual site URL
+                "X-Title": "HN Discussion Summarizer"  # Your app name
+            }
+            # Remove the reasoning parameter entirely
         )
-        return response.content[0].text
+        return response.choices[0].message.content
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error calling Anthropic API: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error calling OpenRouter API: {str(e)}")
 
 @app.post("/summarize", response_model=SummaryResponse)
 async def summarize_hn_thread(request: HNRequest) -> JSONResponse:
@@ -159,8 +172,11 @@ async def summarize_hn_thread(request: HNRequest) -> JSONResponse:
         # Extract comments from the response
         comments = extract_comments(data)
         
-        # Generate summary with Anthropic
-        summary = await generate_summary(comments)
+        # Use the model from the request if provided, otherwise use the default
+        model_to_use = request.model or OPENROUTER_MODEL
+        
+        # Generate summary with OpenRouter
+        summary = await generate_summary(comments, model_to_use)
         
         return JSONResponse(content={"summary": summary})
         

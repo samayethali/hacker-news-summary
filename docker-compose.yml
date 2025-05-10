@@ -2,7 +2,6 @@ services:
   backend:
     container_name: backend
     image: ${IMAGE_REPO:-ghcr.io/samayethali/hacker-news-summary-backend}:${IMAGE_TAG:-latest}
-    # Development override - will use this instead of image if BUILD_LOCALLY=true
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -17,7 +16,6 @@ services:
   frontend:
     container_name: frontend
     image: ${IMAGE_REPO:-ghcr.io/samayethali/hacker-news-summary-frontend}:${IMAGE_TAG:-latest}
-    # Development override - will use this instead of image if BUILD_LOCALLY=true
     build:
       context: ./frontend
       dockerfile: Dockerfile
