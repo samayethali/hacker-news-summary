@@ -29,13 +29,14 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const url = urlInput.value.trim();
         if (!url) return;
+        const model = document.getElementById('model-select').value;
 
         // Show loading, hide other sections
         showSection(loadingSection);
         submitButton.disabled = true;
 
         try {
-            const summary = await fetchSummary(url);
+            const summary = await fetchSummary(url, model);
             displaySummary(summary);
         } catch (error) {
             displayError(error.message || 'An unexpected error occurred.');
@@ -45,10 +46,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Fetch summary from the backend API
-    async function fetchSummary(url) {
+    async function fetchSummary(url, model) {
         // Use relative URL path in production, fallback to explicit localhost for development
         // This avoids container hostname resolution issues on different architectures
-        const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+        const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
             ? 'http://localhost:8000/summarize'
             : '/api/summarize';
             
@@ -59,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ url })
+            body: JSON.stringify({ url, model })
         });
 
         const data = await response.json();

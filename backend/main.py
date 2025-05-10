@@ -35,7 +35,7 @@ if not OPENROUTER_API_KEY:
     raise ValueError("OPENROUTER_API_KEY environment variable is not set")
 
 # Get model from environment, default to claude-3.7-sonnet if not specified
-OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "anthropic/claude-3.7-sonnet")
+OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "openai/gpt-4.1-mini")
 
 # Initialize OpenAI client with OpenRouter base URL
 client = OpenAI(
