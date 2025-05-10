@@ -24,16 +24,14 @@
                         placeholder="https://news.ycombinator.com/item?id=12345 or just 12345" 
                         required
                     >
-                    <div class="form-group">
-                        <label for="model-select">Select AI Model:</label>
-                        <select id="model-select" class="form-control">
-                            <option value="anthropic/claude-3.7-sonnet">Claude 3.7 Sonnet</option>
-                            <option value="anthropic/claude-3.5-sonnet">Claude 3.5 Sonnet</option>
-                            <option value="openai/gpt-4o">GPT-4o</option>
-                            <option value="openai/gpt-4o-mini">GPT-4o Mini</option>
-                            <!-- Add more models as needed -->
-                        </select>
-                    </div>
+                    <label for="model-select" class="sr-only">Select AI Model:</label>
+                    <select id="model-select" class="form-control">
+                        <option value="anthropic/claude-3.7-sonnet">Claude 3.7 Sonnet</option>
+                        <option value="anthropic/claude-3.5-sonnet">Claude 3.5 Sonnet</option>
+                        <option value="openai/gpt-4o">GPT-4o</option>
+                        <option value="openai/gpt-4o-mini">GPT-4o Mini</option>
+                        <!-- Add more models as needed -->
+                    </select>
                     <button type="submit" id="submit-btn">Summarize</button>
                 </div>
             </form>
@@ -64,7 +62,7 @@
         </main>
 
         <footer>
-            <p>Powered by <a href="https://www.anthropic.com/" target="_blank">Anthropic's Claude</a> | <a href="https://github.com/anthropics/anthropic-sdk-python" target="_blank">Anthropic API</a></p>
+            <p>Powered by <a href="https://www.openrouter.ai/" target="_blank">OpenRouter</a></p>
         </footer>
     </div>
 
