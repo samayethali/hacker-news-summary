@@ -36,8 +36,12 @@ document.addEventListener('DOMContentLoaded', () => {
         submitButton.disabled = true;
 
         try {
-            const summary = await fetchSummary(url, model);
-            displaySummary(summary);
+            // Clear previous summary and errors
+            summaryContent.innerHTML = '';
+            currentSummaryMarkdown = '';
+            showSection(loadingSection); // Show loading indicator
+
+            await fetchSummaryStream(url, model);
         } catch (error) {
             displayError(error.message || 'An unexpected error occurred.');
         } finally {
@@ -45,16 +49,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Fetch summary from the backend API
-    async function fetchSummary(url, model) {
-        // Use relative URL path in production, fallback to explicit localhost for development
-        // This avoids container hostname resolution issues on different architectures
+    // Fetch summary from the backend API using streaming
+    async function fetchSummaryStream(url, model) {
         const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-            ? 'http://localhost:8000/summarize'
-            : '/api/summarize';
-            
-        console.log('Using API URL:', apiUrl);
-        
+            ? 'http://localhost:8000/summarize_stream'
+            : '/api/summarize_stream'; // Ensure this matches your backend route for streaming
+
+        console.log('Using streaming API URL:', apiUrl);
+
         const response = await fetch(apiUrl, {
             method: 'POST',
             headers: {
@@ -63,32 +65,48 @@ document.addEventListener('DOMContentLoaded', () => {
             body: JSON.stringify({ url, model })
         });
 
-        const data = await response.json();
-        
         if (!response.ok) {
-            throw new Error(data.detail || 'Failed to generate summary');
+            // Attempt to read error message from stream if possible, or use status text
+            let errorDetail = `Failed to start stream: ${response.statusText}`;
+            try {
+                const errorData = await response.json(); // Or .text() if error is not JSON
+                errorDetail = errorData.detail || errorDetail;
+            } catch (e) {
+                // Ignore if error response is not parseable
+            }
+            throw new Error(errorDetail);
         }
-        
-        return data.summary;
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        currentSummaryMarkdown = ''; // Reset for new stream
+
+        showSection(resultSection); // Show result section once stream starts
+
+        while (true) {
+            const { value, done } = await reader.read();
+            if (done) {
+                console.log('Stream finished.');
+                // Optional: Add a [DONE] marker or similar if needed, though OpenRouter doesn't send one for content.
+                // The backend might send one if we implement it.
+                break;
+            }
+
+            const chunk = decoder.decode(value, { stream: true });
+            currentSummaryMarkdown += chunk;
+            summaryContent.innerHTML = marked.parse(currentSummaryMarkdown);
+            resultSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
     }
 
-    // Display the summary
-    function displaySummary(summary) {
-        console.log('Displaying summary:', summary);
-        
-        // Store the raw markdown for download
-        currentSummaryMarkdown = summary;
-        console.log('Stored currentSummaryMarkdown:', currentSummaryMarkdown);
-        
-        // Convert markdown to HTML
-        summaryContent.innerHTML = marked.parse(summary);
-        
-        // Show result section, hide others
-        showSection(resultSection);
-        
-        // Scroll to result
-        resultSection.scrollIntoView({ behavior: 'smooth' });
-    }
+    // Display the summary (now handled by fetchSummaryStream progressively)
+    // function displaySummary(summary) { // This function is no longer directly called for streaming
+    //     console.log('Displaying summary:', summary);
+    //     currentSummaryMarkdown = summary;
+    //     summaryContent.innerHTML = marked.parse(summary);
+    //     showSection(resultSection);
+    //     resultSection.scrollIntoView({ behavior: 'smooth' });
+    // }
 
     // Display error message
     function displayError(message) {

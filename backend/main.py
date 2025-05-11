@@ -6,7 +6,7 @@ import httpx
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, HttpUrl
 from openai import OpenAI
 
@@ -42,6 +42,25 @@ client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
     api_key=OPENROUTER_API_KEY
 )
+
+PROMPT_TEMPLATE = """Please summarize the key themes and notable opinions from this Hacker News discussion.
+
+Key requirements:
+- Focus on identifying and quoting the most insightful and well-received comments
+- Use direct "quotations" extensively, always with author attribution
+- Group related comments and perspectives under thematic markdown headers
+- Fix any HTML entities in the comments
+- Output in markdown format
+- Prioritize depth over brevity - include interesting nuances and dissenting views
+- For each major point, include 2-3 relevant quotes that showcase the discussion
+
+Remember to:
+- Begin your response with a single title line "# Hacker News Discussion Summary", then immediately start the first ## theme. Do NOT include any other introductory text.
+- Use H2 (##) for main themes
+- Use H3 (###) for subthemes or related perspectives
+- Always wrap quotes in double quotation marks with author attribution
+- Preserve the exact wording from comments when quoting
+"""
 
 class HNRequest(BaseModel):
     url: str
@@ -121,23 +140,7 @@ async def generate_summary(comments: List[str], model: str = None) -> str:
     all_comments = "\n\n".join(comments)
     
     # Updated prompt to focus on highly-rated comments and increase quote usage
-    prompt = """Please summarize the key themes and notable opinions from this Hacker News discussion.
-
-Key requirements:
-- Focus on identifying and quoting the most insightful and well-received comments
-- Use direct "quotations" extensively, always with author attribution
-- Group related comments and perspectives under thematic markdown headers
-- Fix any HTML entities in the comments
-- Output in markdown format
-- Prioritize depth over brevity - include interesting nuances and dissenting views
-- For each major point, include 2-3 relevant quotes that showcase the discussion
-
-Remember to:
-- Use H2 (##) for main themes
-- Use H3 (###) for subthemes or related perspectives
-- Always wrap quotes in double quotation marks with author attribution
-- Preserve the exact wording from comments when quoting
-"""
+    prompt = PROMPT_TEMPLATE
     
     try:
         # Replace Anthropic API call with OpenRouter (via OpenAI SDK)
@@ -156,6 +159,36 @@ Remember to:
         return response.choices[0].message.content
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error calling OpenRouter API: {str(e)}")
+
+async def stream_summary(comments: List[str], model: str = None):
+    """Generate a summary using OpenRouter and stream the response."""
+    if not comments:
+        yield "No comments found to summarize."
+        return
+
+    model_to_use = model or OPENROUTER_MODEL
+    all_comments = "\n\n".join(comments)
+    prompt = PROMPT_TEMPLATE
+    try:
+        stream = client.chat.completions.create(
+            model=model_to_use,
+            messages=[
+                {"role": "user", "content": f"{all_comments}\n\n{prompt}"}
+            ],
+            max_tokens=4000,
+            stream=True,
+            extra_headers={
+                "HTTP-Referer": "https://hn-summary-app.example.com",
+                "X-Title": "HN Discussion Summarizer"
+            }
+        )
+        for chunk in stream:
+            if chunk.choices[0].delta.content is not None:
+                yield chunk.choices[0].delta.content
+    except Exception as e:
+        # Log the error for debugging
+        print(f"Error during OpenRouter stream: {str(e)}")
+        yield f"Error calling OpenRouter API: {str(e)}"
 
 @app.post("/summarize", response_model=SummaryResponse)
 async def summarize_hn_thread(request: HNRequest) -> JSONResponse:
@@ -184,6 +217,39 @@ async def summarize_hn_thread(request: HNRequest) -> JSONResponse:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
+
+@app.post("/summarize_stream")
+async def summarize_hn_thread_stream(request: HNRequest):
+    """
+    Summarize a Hacker News thread from a URL and stream the response.
+    """
+    try:
+        item_id = extract_hn_id(request.url)
+        data = await fetch_hn_data(item_id)
+        comments = extract_comments(data)
+        model_to_use = request.model or OPENROUTER_MODEL
+        
+        return StreamingResponse(stream_summary(comments, model_to_use), media_type="text/event-stream")
+        
+    except ValueError as e:
+        # For streaming, we can't easily raise HTTPException for bad input after starting the stream.
+        # Consider how to handle this. For now, let it propagate if it happens before streaming.
+        # If streaming has started, this won't be caught here.
+        # A simple way is to return a StreamingResponse that yields an error message.
+        async def error_stream():
+            yield f"Error: {str(e)}"
+        return StreamingResponse(error_stream(), media_type="text/event-stream", status_code=400)
+    except HTTPException as e:
+        # If HTTPException is raised before streaming starts (e.g., from fetch_hn_data)
+        async def error_stream_http():
+            yield f"Error: {e.detail}"
+        return StreamingResponse(error_stream_http(), media_type="text/event-stream", status_code=e.status_code)
+    except Exception as e:
+        # Generic error handling for streaming
+        print(f"An unexpected error occurred during streaming setup: {str(e)}") # Log for server visibility
+        async def error_stream_unexpected():
+            yield f"An unexpected error occurred: {str(e)}"
+        return StreamingResponse(error_stream_unexpected(), media_type="text/event-stream", status_code=500)
 
 if __name__ == "__main__":
     import uvicorn
