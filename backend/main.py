@@ -6,9 +6,9 @@ import httpx
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, HttpUrl
-import anthropic
+from openai import OpenAI
 
 # Load .env file
 load_dotenv()
@@ -30,18 +30,41 @@ app.add_middleware(
 )
 
 # Get environment variables
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
-if not ANTHROPIC_API_KEY:
-    raise ValueError("ANTHROPIC_API_KEY environment variable is not set")
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+if not OPENROUTER_API_KEY:
+    raise ValueError("OPENROUTER_API_KEY environment variable is not set")
 
-# Get model from environment, default to claude-3.7-sonnet if not specified
-ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-3.7-sonnet")
+# Default to openai/gpt-4.1-mini if not specified
+OPENROUTER_MODEL = "openai/gpt-4.1-mini"
 
-# Initialize Anthropic client
-client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+# Initialize OpenAI client with OpenRouter base URL
+client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=OPENROUTER_API_KEY
+)
+
+PROMPT_TEMPLATE = """Please summarize the key themes and notable opinions from this Hacker News discussion.
+
+Key requirements:
+- Focus on identifying and quoting the most insightful and well-received comments
+- Use direct "quotations" extensively, always with author attribution
+- Group related comments and perspectives under thematic markdown headers
+- Fix any HTML entities in the comments
+- Output in markdown format
+- Prioritize depth over brevity - include interesting nuances and dissenting views
+- For each major point, include 2-3 relevant quotes that showcase the discussion
+
+Remember to:
+- Begin your response with a single title line "# Hacker News Discussion Summary", then immediately start the first ## theme. Do NOT include any other introductory text.
+- Use H2 (##) for main themes
+- Use H3 (###) for subthemes or related perspectives
+- Always wrap quotes in double quotation marks with author attribution
+- Preserve the exact wording from comments when quoting
+"""
 
 class HNRequest(BaseModel):
     url: str
+    model: Optional[str] = None
 
 class SummaryResponse(BaseModel):
     summary: str
@@ -105,44 +128,67 @@ def extract_comments(item: Dict[Any, Any]) -> List[str]:
     
     return comments
 
-async def generate_summary(comments: List[str]) -> str:
-    """Generate a summary using the Anthropic Claude-3.7-Sonnet model."""
+async def generate_summary(comments: List[str], model: str = None) -> str:
+    """Generate a summary using OpenRouter."""
     if not comments:
         return "No comments found to summarize."
+    
+    # Use provided model or default
+    model_to_use = model or OPENROUTER_MODEL
     
     # Join all comments into a single text
     all_comments = "\n\n".join(comments)
     
     # Updated prompt to focus on highly-rated comments and increase quote usage
-    prompt = """Please summarize the key themes and notable opinions from this Hacker News discussion.
-
-Key requirements:
-- Focus on identifying and quoting the most insightful and well-received comments
-- Use direct "quotations" extensively, always with author attribution
-- Group related comments and perspectives under thematic markdown headers
-- Fix any HTML entities in the comments
-- Output in markdown format
-- Prioritize depth over brevity - include interesting nuances and dissenting views
-- For each major point, include 2-3 relevant quotes that showcase the discussion
-
-Remember to:
-- Use H2 (##) for main themes
-- Use H3 (###) for subthemes or related perspectives
-- Always wrap quotes in double quotation marks with author attribution
-- Preserve the exact wording from comments when quoting
-"""
+    prompt = PROMPT_TEMPLATE
     
     try:
-        response = client.messages.create(
-            model=ANTHROPIC_MODEL,
-            max_tokens=4000,
+        # Replace Anthropic API call with OpenRouter (via OpenAI SDK)
+        response = client.chat.completions.create(
+            model=model_to_use,
             messages=[
                 {"role": "user", "content": f"{all_comments}\n\n{prompt}"}
-            ]
+            ],
+            max_tokens=4000,
+            extra_headers={
+                "HTTP-Referer": "https://hn-summary-app.example.com",  # Replace with your actual site URL
+                "X-Title": "HN Discussion Summarizer"  # Your app name
+            }
+            # Remove the reasoning parameter entirely
         )
-        return response.content[0].text
+        return response.choices[0].message.content
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error calling Anthropic API: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error calling OpenRouter API: {str(e)}")
+
+async def stream_summary(comments: List[str], model: str = None):
+    """Generate a summary using OpenRouter and stream the response."""
+    if not comments:
+        yield "No comments found to summarize."
+        return
+
+    model_to_use = model or OPENROUTER_MODEL
+    all_comments = "\n\n".join(comments)
+    prompt = PROMPT_TEMPLATE
+    try:
+        stream = client.chat.completions.create(
+            model=model_to_use,
+            messages=[
+                {"role": "user", "content": f"{all_comments}\n\n{prompt}"}
+            ],
+            max_tokens=4000,
+            stream=True,
+            extra_headers={
+                "HTTP-Referer": "https://hn-summary-app.example.com",
+                "X-Title": "HN Discussion Summarizer"
+            }
+        )
+        for chunk in stream:
+            if chunk.choices[0].delta.content is not None:
+                yield chunk.choices[0].delta.content
+    except Exception as e:
+        # Log the error for debugging
+        print(f"Error during OpenRouter stream: {str(e)}")
+        yield f"Error calling OpenRouter API: {str(e)}"
 
 @app.post("/summarize", response_model=SummaryResponse)
 async def summarize_hn_thread(request: HNRequest) -> JSONResponse:
@@ -159,8 +205,11 @@ async def summarize_hn_thread(request: HNRequest) -> JSONResponse:
         # Extract comments from the response
         comments = extract_comments(data)
         
-        # Generate summary with Anthropic
-        summary = await generate_summary(comments)
+        # Use the model from the request if provided, otherwise use the default
+        model_to_use = request.model or OPENROUTER_MODEL
+        
+        # Generate summary with OpenRouter
+        summary = await generate_summary(comments, model_to_use)
         
         return JSONResponse(content={"summary": summary})
         
@@ -168,6 +217,39 @@ async def summarize_hn_thread(request: HNRequest) -> JSONResponse:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
+
+@app.post("/summarize_stream")
+async def summarize_hn_thread_stream(request: HNRequest):
+    """
+    Summarize a Hacker News thread from a URL and stream the response.
+    """
+    try:
+        item_id = extract_hn_id(request.url)
+        data = await fetch_hn_data(item_id)
+        comments = extract_comments(data)
+        model_to_use = request.model or OPENROUTER_MODEL
+        
+        return StreamingResponse(stream_summary(comments, model_to_use), media_type="text/event-stream")
+        
+    except ValueError as e:
+        # For streaming, we can't easily raise HTTPException for bad input after starting the stream.
+        # Consider how to handle this. For now, let it propagate if it happens before streaming.
+        # If streaming has started, this won't be caught here.
+        # A simple way is to return a StreamingResponse that yields an error message.
+        async def error_stream():
+            yield f"Error: {str(e)}"
+        return StreamingResponse(error_stream(), media_type="text/event-stream", status_code=400)
+    except HTTPException as e:
+        # If HTTPException is raised before streaming starts (e.g., from fetch_hn_data)
+        async def error_stream_http():
+            yield f"Error: {e.detail}"
+        return StreamingResponse(error_stream_http(), media_type="text/event-stream", status_code=e.status_code)
+    except Exception as e:
+        # Generic error handling for streaming
+        print(f"An unexpected error occurred during streaming setup: {str(e)}") # Log for server visibility
+        async def error_stream_unexpected():
+            yield f"An unexpected error occurred: {str(e)}"
+        return StreamingResponse(error_stream_unexpected(), media_type="text/event-stream", status_code=500)
 
 if __name__ == "__main__":
     import uvicorn

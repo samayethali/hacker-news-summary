@@ -24,6 +24,13 @@
                         placeholder="https://news.ycombinator.com/item?id=12345 or just 12345" 
                         required
                     >
+                    <label for="model-select" class="sr-only">Select AI Model:</label>
+                    <select id="model-select" class="form-control">
+                        <option value="openai/gpt-4.1">GPT-4.1</option>
+                        <option value="openai/gpt-4.1-mini" selected>GPT-4.1 Mini</option>
+                        <option value="openai/o4-mini-high">O4 Mini High</option>
+                        <!-- Add more models as needed -->
+                    </select>
                     <button type="submit" id="submit-btn">Summarize</button>
                 </div>
             </form>
@@ -35,7 +42,6 @@
 
             <div id="result" class="hidden">
                 <div class="result-header">
-                    <h2>Summary</h2>
                     <button
                         type="button"
                         id="download-btn"
@@ -54,7 +60,7 @@
         </main>
 
         <footer>
-            <p>Powered by <a href="https://www.anthropic.com/" target="_blank">Anthropic's Claude</a> | <a href="https://github.com/anthropics/anthropic-sdk-python" target="_blank">Anthropic API</a></p>
+            <p>Powered by <a href="https://www.openrouter.ai/" target="_blank">OpenRouter</a></p>
         </footer>
     </div>
 

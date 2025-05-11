@@ -44,6 +44,8 @@ header p {
 
 .input-group {
     display: flex;
+    align-items: center; /* Vertically align items */
+    gap: 0.5rem; /* Consistent spacing */
     margin-bottom: 2rem;
 }
 
@@ -53,6 +55,18 @@ input[type="text"] {
     border: 1px solid var(--border-color);
     border-radius: 4px 0 0 4px;
     font-size: 1rem;
+}
+
+select#model-select {
+    padding: 0.8rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0; /* Will be set with adjacent elements */
+    font-size: 1rem;
+    background: white;
+    cursor: pointer;
+    /* Ensure it doesn't grow excessively */
+    flex-shrink: 0;
+    /* Add a default width or min-width if needed, or let content decide */
 }
 
 button {
@@ -222,15 +236,38 @@ footer a:hover {
 @media (max-width: 600px) {
     .input-group {
         flex-direction: column;
+        align-items: stretch; /* Make items full width in column */
     }
     
+    input[type="text"],
+    select#model-select,
+    button {
+        width: 100%;
+        border-radius: 4px; /* Reset border-radius for stacked items */
+    }
+
     input[type="text"] {
-        border-radius: 4px;
         margin-bottom: 0.5rem;
+    }
+
+    select#model-select {
+        margin-bottom: 0.5rem; /* Consistent spacing */
     }
     
     button {
-        border-radius: 4px;
-        width: 100%;
+        /* width: 100%; /* Already set above */
     }
+}
+
+/* Screen-reader only class */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
 }

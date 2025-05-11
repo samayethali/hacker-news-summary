@@ -1,6 +1,6 @@
 # Hacker News Discussion Summarizer
 
-A web application that summarizes Hacker News discussions using the Anthropic API.
+A web application that summarizes Hacker News discussions using the OpenRouter API.
 
 ![HN Discussion Summarizer Screenshot](img/screenshot.png)
 
@@ -9,6 +9,7 @@ A web application that summarizes Hacker News discussions using the Anthropic AP
 - Simple, clean interface for entering Hacker News URLs
 - Accepts full HN URLs or just item IDs
 - Summarizes discussions with thematic organization
+- Supports multiple LLMs via OpenRouter
 - Renders results in formatted markdown
 - Allows for downloading the summary as Markdown
 - Dockerized deployment for easy setup
@@ -19,7 +20,7 @@ A web application that summarizes Hacker News discussions using the Anthropic AP
 ### Prerequisites
 
 - Docker and Docker Compose
-- Anthropic API key
+- OpenRouter API key
 
 ### Docker Deployment
 
@@ -32,7 +33,7 @@ A web application that summarizes Hacker News discussions using the Anthropic AP
    ```
 
 2. Configure your environment variables (required):
-   - Rename `.env.example` to `.env` and set your Anthropic API key
+   - Rename `.env.example` to `.env` and set your OpenRouter API key
 
 3. For most users, simply run:
 
@@ -67,6 +68,7 @@ BUILD_LOCALLY=true docker compose up -d --build
 ## API Endpoints
 
 - `POST /summarize`: Accepts a JSON payload with a `url` field containing a Hacker News URL or item ID
+- `POST /summarize_stream`: Streams the summary response for a Hacker News URL or item ID
 
 ## Project Structure
 

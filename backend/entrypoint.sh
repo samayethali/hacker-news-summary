@@ -8,9 +8,9 @@ set -e
 #   sleep 2
 # done
 
-# Check if ANTHROPIC_API_KEY is set
-if [ -z "$ANTHROPIC_API_KEY" ]; then
-  echo "Warning: ANTHROPIC_API_KEY environment variable is not set"
+# Check if OPENROUTER_API_KEY is set
+if [ -z "$OPENROUTER_API_KEY" ]; then
+  echo "Warning: OPENROUTER_API_KEY environment variable is not set"
   echo "The application may not function correctly without this key"
 fi
 
